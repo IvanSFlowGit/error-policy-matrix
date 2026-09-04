@@ -1,36 +1,21 @@
-"""The handled path. Twenty four cases.
+"""The handled path. Twenty four cases on LangGraph.
 
-Every case attaches an error_handler to the failing node. The declared policy
-says the handler absorbs the error and the graph finishes. So PASS means no
-exception escaped.
+Every case attaches the framework's declared error handler to the failing step.
+The declared policy says the handler absorbs the error and execution finishes.
+So PASS means no exception escaped.
 
-Solo and parallel, crossed with invoke, four streaming modes and two subgraph
-shapes, each run synchronously and asynchronously.
+Framework agnostic since 2026-09-04. The execution shapes moved into the
+adapter, which is where the framework nouns belong. This file now holds one
+thing: the assertion DIRECTION. Handled path asserts no escape.
+
+DO NOT merge this with controls.py behind a flag. The two populations assert
+OPPOSITE things, and a shared helper with an expect_raise parameter is how a
+control quietly becomes a copy of the thing it is controlling.
 """
 
-import asyncio
+import adapters
 
-from _graphs import INPUT, build
-
-MODES = ("values", "updates", "custom", "messages")
-
-
-async def _acollect(graph, **kwargs):
-    return [event async for event in graph.astream(INPUT, **kwargs)]
-
-
-def _cases(graph):
-    yield "invoke", lambda: graph.invoke(INPUT)
-    yield "ainvoke", lambda: asyncio.run(graph.ainvoke(INPUT))
-    for mode in MODES:
-        yield f"stream({mode})", lambda m=mode: list(graph.stream(INPUT, stream_mode=m))
-        yield f"astream({mode})", lambda m=mode: asyncio.run(_acollect(graph, stream_mode=m))
-    yield "stream(values, subgraphs)", lambda: list(
-        graph.stream(INPUT, stream_mode="values", subgraphs=True)
-    )
-    yield "astream(custom, subgraphs)", lambda: asyncio.run(
-        _acollect(graph, stream_mode="custom", subgraphs=True)
-    )
+ADAPTER = adapters.load()
 
 
 def run():
@@ -38,8 +23,8 @@ def run():
     results = []
     for parallel in (False, True):
         kind = "parallel" if parallel else "solo"
-        graph = build(parallel=parallel, with_handler=True)
-        for shape, call in _cases(graph):
+        graph = ADAPTER.build(parallel=parallel, with_handler=True)
+        for shape, call in ADAPTER.shapes(graph):
             label = f"{kind:8} | {shape}"
             try:
                 call()
