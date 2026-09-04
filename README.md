@@ -1,4 +1,4 @@
-# langgraph-error-handler-matrix
+# error-policy-matrix
 
 A test matrix for one question: does a graph's declared error handling policy
 produce the same terminal result across every execution shape it can be run in?
@@ -29,10 +29,14 @@ them separately.
 
 ## Running it
 
-There is no package and no installer. Four files and the standard library.
+There is no package and no installer. Five files, 279 lines, and the standard
+library. Only one of the five imports the framework: `adapters/langgraph.py`.
+The runner, the handled path and the control import nothing but `importlib`,
+`sys` and `traceback`, which is why a second framework is a second adapter
+rather than a rewrite.
 
     git clone <repo-url>
-    cd langgraph-error-handler-matrix
+    cd error-policy-matrix
     python -m venv .venv && source .venv/bin/activate
 
 Then install the framework at whatever build you want to measure, and run it.
